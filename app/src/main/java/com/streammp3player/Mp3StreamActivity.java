@@ -23,15 +23,15 @@ import java.util.concurrent.TimeUnit;
 public class Mp3StreamActivity extends AppCompatActivity implements MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnCompletionListener, View.OnTouchListener, MediaPlayer.OnPreparedListener {
 
     private final Handler handler = new Handler();
-    EditText etUrl;
-    AppCompatSeekBar seekBarProgress;
-    ImageButton btnPlayPause;
-    TextView tvCurrentTime, tvDuration, tvSource;
-    AppCompatButton btnSetUrl;
-    ProgressBar progressBarLoading;
+    private EditText etUrl;
+    private AppCompatSeekBar seekBarProgress;
+    private ImageButton btnPlayPause;
+    private TextView tvCurrentTime, tvDuration, tvSource;
+    private AppCompatButton btnSetUrl;
+    private ProgressBar progressBarLoading;
     private LinearLayout playerContainer;
     private MediaPlayer mediaPlayer;
-    private long mediaFileLengthInMilliseconds; // this value contains the song duration in milliseconds. Look at getDuration() method in MediaPlayer class
+    private long mediaFileLengthInMilliseconds; // it will contain song duration in milliseconds.
     private boolean isSeeking = false;
 
     @Override
@@ -51,15 +51,15 @@ public class Mp3StreamActivity extends AppCompatActivity implements MediaPlayer.
 
         playerContainer.setVisibility(View.GONE);
 
-        seekBarProgress.setOnTouchListener(this);
 
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
+        // listeners
         mediaPlayer.setOnBufferingUpdateListener(this);
         mediaPlayer.setOnCompletionListener(this);
-
         mediaPlayer.setOnPreparedListener(this);
-
+        seekBarProgress.setOnTouchListener(this);
         btnSetUrl.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -88,12 +88,9 @@ public class Mp3StreamActivity extends AppCompatActivity implements MediaPlayer.
                 }
             }
         });
-
     }
 
-    /**
-     * Method which updates the SeekBar primary progress by current song playing position
-     */
+    // Recursive method to update seekBar every 1 second
     private void primarySeekBarProgressUpdater() {
         if (mediaPlayer.isPlaying()) {
             if (!isSeeking) {
@@ -109,11 +106,13 @@ public class Mp3StreamActivity extends AppCompatActivity implements MediaPlayer.
         }
     }
 
+    // To show buffering as a secondary progress in progressBar
     @Override
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
         seekBarProgress.setSecondaryProgress((int) (((float) percent / 100) * mediaFileLengthInMilliseconds));
     }
 
+    // This will be called when Streaming audio gets completed
     @Override
     public void onCompletion(MediaPlayer mp) {
         mediaPlayer.pause();
@@ -122,10 +121,10 @@ public class Mp3StreamActivity extends AppCompatActivity implements MediaPlayer.
         btnPlayPause.setImageResource(R.drawable.ic_play);
     }
 
+    // Method to seek track according to seekBar
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         isSeeking = true;
-        /** Seekbar onTouch event handler. Method which seeks MediaPlayer to seekBar primary progress position*/
         tvCurrentTime.setText(getTimeToDisplay(seekBarProgress.getProgress()));
         if (event.getAction() != MotionEvent.ACTION_UP) return false;
         mediaPlayer.seekTo(seekBarProgress.getProgress());
@@ -133,6 +132,7 @@ public class Mp3StreamActivity extends AppCompatActivity implements MediaPlayer.
         return false;
     }
 
+    // simple milli to readable minutes converter
     private String getTimeToDisplay(long milli) {
         return String.format(Locale.ENGLISH, "%d:%02d",
                 TimeUnit.MILLISECONDS.toMinutes(milli),
@@ -141,6 +141,7 @@ public class Mp3StreamActivity extends AppCompatActivity implements MediaPlayer.
         );
     }
 
+    // onClick for Play/Pause button
     public void playPauseOnClick(View view) {
         if (!mediaPlayer.isPlaying()) {
             mediaPlayer.start();
@@ -152,6 +153,7 @@ public class Mp3StreamActivity extends AppCompatActivity implements MediaPlayer.
         primarySeekBarProgressUpdater();
     }
 
+    // onClick for Stop button
     public void stopOnClick(View view) {
         if (mediaPlayer.isPlaying())
             mediaPlayer.pause();
@@ -161,6 +163,7 @@ public class Mp3StreamActivity extends AppCompatActivity implements MediaPlayer.
         btnPlayPause.setImageResource(R.drawable.ic_play);
     }
 
+    // It will be called when MediaPlayer is prepared and ready to play, see mediaPlayer.prepareAsync()
     @Override
     public void onPrepared(MediaPlayer mp) {
         progressBarLoading.setVisibility(View.GONE);
@@ -173,6 +176,7 @@ public class Mp3StreamActivity extends AppCompatActivity implements MediaPlayer.
         tvDuration.setText(getTimeToDisplay(mediaFileLengthInMilliseconds));
     }
 
+    // Releasing resources
     @Override
     protected void onDestroy() {
         super.onDestroy();
